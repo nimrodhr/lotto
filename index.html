@@ -238,7 +238,19 @@
 
   /* ---------- sound (WebAudio, no files) ---------- */
   let ac;
-  function unlockAudio(){ try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if (ac.state==='suspended') ac.resume(); }catch(e){} }
+  // iOS: Web Audio is muted by the ringer switch unless a real <audio> element has played in this page.
+  // Playing a tiny silent WAV inside the user gesture switches the audio session to "playback" mode.
+  const silent = new Audio('data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA');
+  silent.setAttribute('playsinline',''); silent.preload = 'auto';
+  function unlockAudio(){
+    try{
+      ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+      if (ac.state !== 'running') ac.resume();
+      const p = silent.play(); if (p && p.catch) p.catch(()=>{});
+    }catch(e){}
+  }
+  document.addEventListener('pointerdown', unlockAudio, {passive:true});
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && ac.state !== 'running') ac.resume(); });
   function beep(freq, t, dur, vol, type){
     if (muted || !ac) return;
     const o = ac.createOscillator(), g = ac.createGain();
@@ -246,11 +258,11 @@
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur);
   }
-  function tick(){ if (ac) beep(900, ac.currentTime, 0.04, 0.06); }
+  function tick(){ if (ac) beep(1000, ac.currentTime, 0.05, 0.18, 'triangle'); }
   function fanfare(){
     if (!ac) return;
     const t = ac.currentTime, notes = [523, 659, 784, 1047, 784, 1047, 1319];
-    notes.forEach((f,i) => beep(f, t + i*0.12, 0.35, 0.12, 'triangle'));
+    notes.forEach((f,i) => beep(f, t + i*0.12, 0.35, 0.3, 'triangle'));
   }
   $('mute').textContent = muted ? '🔇' : '🔊';
   $('mute').onclick = () => { muted = !muted; localStorage.setItem('dani-wheel-mute', muted?'1':'0'); $('mute').textContent = muted ? '🔇' : '🔊'; };

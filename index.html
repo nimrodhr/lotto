@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b0f5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="הגלגל של דני">
+<title>גלגל ההגרלה של דני</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  button,input{touch-action:manipulation}
+  body{
+    margin:0;min-height:100vh;color:#fff;
+    font-family:Rubik,"Segoe UI",Arial,sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%,rgba(120,60,255,.55) 0,transparent 45%),
+      radial-gradient(circle at 85% 80%,rgba(255,80,160,.5) 0,transparent 45%),
+      radial-gradient(circle at 80% 15%,rgba(40,210,255,.35) 0,transparent 35%),
+      linear-gradient(160deg,#150a33,#2b0f5c 60%,#1b0b3f);
+    display:flex;flex-direction:column;align-items:center;
+    padding:calc(12px + env(safe-area-inset-top)) 16px calc(70px + env(safe-area-inset-bottom));overflow-x:hidden;
+  }
+  h1{
+    font-size:clamp(30px,7vw,54px);margin:6px 0 14px;font-weight:800;text-align:center;
+    background:linear-gradient(90deg,#ffd23f,#ff7ac6,#4dd0ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));
+  }
+  .tabs{display:flex;gap:6px;background:rgba(255,255,255,.12);padding:6px;border-radius:999px;margin-bottom:22px;backdrop-filter:blur(6px)}
+  .tabs button{border:0;background:transparent;color:#fff;font:inherit;font-weight:600;font-size:clamp(15px,4.5vw,18px);padding:10px clamp(14px,4vw,24px);white-space:nowrap;border-radius:999px;cursor:pointer;transition:.2s}
+  .tabs button.active{background:#fff;color:#2b0f5c;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  .tabs .badge{display:inline-block;min-width:26px;padding:2px 8px;margin-right:6px;border-radius:999px;background:#ff2e63;color:#fff;font-size:14px}
+  .tab{display:none;width:100%;max-width:640px;flex-direction:column;align-items:center}
+  .tab.active{display:flex}
+
+  /* wheel */
+  .wheel-wrap{position:relative;width:min(88vw,540px,56vh);aspect-ratio:1;margin-top:18px}
+  #wheel{width:100%;height:100%;border-radius:50%;
+    box-shadow:0 0 0 10px #fff,0 0 0 18px #ffd23f,0 0 60px 20px rgba(255,210,63,.35),0 30px 70px rgba(0,0,0,.55)}
+  .pointer{position:absolute;top:-26px;left:50%;transform:translateX(-50%);z-index:3;
+    width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:50px solid #ff2e63;
+    filter:drop-shadow(0 5px 6px rgba(0,0,0,.45))}
+  .pointer::after{content:"";position:absolute;top:-58px;left:-11px;width:22px;height:22px;border-radius:50%;background:#ff2e63}
+  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;
+    width:18%;height:18%;border-radius:50%;background:#fff;color:#2b0f5c;
+    display:flex;align-items:center;justify-content:center;font-size:clamp(26px,8vw,44px);
+    box-shadow:0 0 0 7px #ffd23f,0 8px 22px rgba(0,0,0,.45);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 7px #ffd23f,0 8px 22px rgba(0,0,0,.45)}50%{box-shadow:0 0 0 12px #ffd23f,0 8px 22px rgba(0,0,0,.45)}}
+  #spin{margin-top:clamp(28px,6vh,44px);font:inherit;font-size:clamp(24px,7vw,30px);font-weight:800;padding:14px clamp(40px,15vw,70px);min-width:min(80vw,320px);border:0;border-radius:999px;
+    color:#2b0f5c;background:linear-gradient(90deg,#ffd23f,#ff9f43);cursor:pointer;
+    box-shadow:0 8px 0 #c47a12,0 16px 34px rgba(0,0,0,.45);transition:transform .1s,box-shadow .1s}
+  #spin:hover{filter:brightness(1.07)}
+  #spin:active{transform:translateY(6px);box-shadow:0 2px 0 #c47a12,0 6px 14px rgba(0,0,0,.45)}
+  #spin:disabled{opacity:.55;cursor:not-allowed;transform:none}
+  .hint{margin-top:12px;opacity:.75;font-size:15px;min-height:20px}
+
+  /* names */
+  form{display:flex;gap:8px;width:100%;margin-bottom:16px}
+  input{flex:1;font:inherit;font-size:18px;padding:12px 16px;border-radius:14px;border:0;outline:0;background:#fff;color:#2b0f5c}
+  .btn{font:inherit;font-weight:600;font-size:16px;padding:10px 20px;border:0;border-radius:14px;cursor:pointer;background:#ffd23f;color:#2b0f5c;transition:.15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:rgba(255,255,255,.14);color:#fff}
+  ul{list-style:none;margin:0;padding:0;width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px 8px 8px;min-height:52px;border-radius:14px;font-weight:600;font-size:17px;color:#1a0b3d;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+  li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  li .x{flex:none;background:rgba(0,0,0,.14);border:0;border-radius:50%;width:36px;height:36px;cursor:pointer;color:inherit;font-weight:800;font-size:14px}
+  li .x:hover{background:rgba(0,0,0,.3);color:#fff}
+  .row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:center}
+  .row .btn{min-height:44px}
+  @media (max-width:360px){form{flex-direction:column}}
+  .empty{opacity:.75;text-align:center;margin:20px 0}
+
+  /* winner overlay */
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,0,28,.85);z-index:10;padding:16px}
+  .overlay.show{display:flex}
+  #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .card{position:relative;text-align:center;padding:20px;width:100%;max-width:900px;animation:pop .7s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+  .label{font-size:clamp(22px,4vw,34px);font-weight:600;letter-spacing:1px;margin-bottom:6px}
+  .winner{font-size:clamp(60px,22vw,140px);font-weight:800;line-height:1.1;word-break:break-word;
+    background:linear-gradient(90deg,#ffd23f,#ff7ac6,#4dd0ff,#ffd23f);background-size:300% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite;
+    filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
+  @keyframes shine{to{background-position:300% 0}}
+  .congrats{font-size:clamp(24px,6vw,40px);font-weight:800;margin-top:10px;color:#ffd23f;text-shadow:0 3px 12px rgba(0,0,0,.5);animation:wiggle 1.2s ease-in-out infinite}
+  @keyframes wiggle{0%,100%{transform:rotate(-2deg) scale(1)}50%{transform:rotate(2deg) scale(1.06)}}
+  .trophy{font-size:clamp(64px,18vw,110px);animation:bounce 1s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+  .actions .btn{font-size:19px;padding:14px 26px;min-height:48px}
+  #mute{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom));left:14px;font-size:22px;background:rgba(255,255,255,.14);border:0;border-radius:50%;width:44px;height:44px;cursor:pointer;z-index:5}
+</style>
+</head>
+<body>
+<button id="mute" title="צליל">🔊</button>
+<h1>🎡 גלגל ההגרלה של דני</h1>
+
+<nav class="tabs">
+  <button data-tab="wheel" class="active">הגלגל</button>
+  <button data-tab="names">רשימת שמות <span class="badge" id="count">0</span></button>
+</nav>
+
+<section id="tab-wheel" class="tab active">
+  <div class="wheel-wrap">
+    <div class="pointer"></div>
+    <canvas id="wheel"></canvas>
+    <div class="hub" id="hub">🎡</div>
+  </div>
+  <button id="spin">התחל!</button>
+  <div class="hint" id="hint"></div>
+</section>
+
+<section id="tab-names" class="tab">
+  <form id="addForm">
+    <input id="nameInput" placeholder="שם חדש... (אפשר כמה שמות עם פסיק)" autocomplete="off">
+    <button class="btn" type="submit">הוספה</button>
+  </form>
+  <ul id="list"></ul>
+  <div class="empty" id="empty" hidden>הרשימה ריקה. הוסיפו שמות כדי להתחיל!</div>
+  <div class="row">
+    <button class="btn ghost" id="shuffle">🔀 ערבוב הסדר</button>
+    <button class="btn ghost" id="clear">🗑️ מחיקת הכול</button>
+    <button class="btn ghost" id="reset">↩️ רשימת ברירת מחדל</button>
+  </div>
+</section>
+
+<div id="overlay" class="overlay">
+  <canvas id="fx"></canvas>
+  <div class="card">
+    <div class="trophy">🏆</div>
+    <div class="label">והזכייה הולכת ל...</div>
+    <div class="winner" id="winner"></div>
+    <div class="congrats">מזל טוב! 🎉🎉🎉</div>
+    <div class="actions">
+      <button class="btn" id="again">🎡 סיבוב נוסף</button>
+      <button class="btn ghost" id="close">סגירה</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const DEFAULT = ['נועה','מאיה','תמר','שירה','יעל','רוני','אביגיל','ליה'];
+  const COLORS = ['#ff5e7e','#ffb347','#ffe94d','#7ef29d','#4dd0ff','#a78bfa','#ff7ac6','#5ef2e0','#ff8c42','#9be564'];
+  const KEY = 'dani-wheel-names';
+
+  let names = load();
+  let rot = 0, spinning = false;
+  let muted = localStorage.getItem('dani-wheel-mute') === '1';
+
+  function load(){
+    try{ const s = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(s)) return s; }catch(e){}
+    return [...DEFAULT];
+  }
+  function save(){ localStorage.setItem(KEY, JSON.stringify(names)); }
+  function color(i){
+    const n = names.length, L = COLORS.length;
+    const m = (n % L === 1 && n > L) ? L - 1 : L;   // avoid same color on first and last slice
+    return COLORS[i % m];
+  }
+  function rnd(){ const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 2**32; }
+
+  /* ---------- wheel ---------- */
+  const cv = $('wheel'), ctx = cv.getContext('2d');
+  const SIZE = 720, C = SIZE/2, R = C - 4;
+  cv.width = cv.height = SIZE;
+
+  function draw(){
+    ctx.clearRect(0,0,SIZE,SIZE);
+    const n = names.length;
+    if (!n){
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(C,C,R,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#2b0f5c'; ctx.font = '800 32px Rubik, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('הוסיפו שמות בטאב "רשימת שמות"', C, C + 90);
+      return;
+    }
+    const arc = Math.PI*2/n;
+    ctx.save(); ctx.translate(C,C); ctx.rotate(rot);
+    for (let i=0;i<n;i++){
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,R,i*arc,(i+1)*arc); ctx.closePath();
+      ctx.fillStyle = color(i); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = n > 1 ? 3 : 0; ctx.stroke();
+
+      ctx.save(); ctx.rotate(i*arc + arc/2);
+      let fs = Math.min(42, Math.max(12, Math.floor(arc*R*0.5)));
+      const maxW = R - 100;
+      ctx.font = `800 ${fs}px Rubik, sans-serif`;
+      while (ctx.measureText(names[i]).width > maxW && fs > 10){ fs--; ctx.font = `800 ${fs}px Rubik, sans-serif`; }
+      ctx.fillStyle = '#1a0b3d'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(names[i], R - 26, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function idxAt(r){
+    const n = names.length, arc = Math.PI*2/n;
+    let a = (-Math.PI/2 - r) % (Math.PI*2); if (a < 0) a += Math.PI*2;
+    return Math.floor(a/arc) % n;
+  }
+
+  function spin(){
+    if (spinning) return;
+    if (names.length < 2){ $('hint').textContent = 'צריך לפחות שני שמות ברשימה כדי להגריל'; return; }
+    spinning = true; $('spin').disabled = true; $('hint').textContent = ''; $('hub').textContent = '🎲';
+    const n = names.length, arc = Math.PI*2/n;
+    const target = Math.floor(rnd()*n);
+    const within = arc*(0.15 + 0.7*rnd());
+    const base = -Math.PI/2 - (target*arc + within);
+    const minRot = rot + Math.PI*2*(5 + Math.floor(rnd()*3));
+    const k = Math.ceil((minRot - base)/(Math.PI*2));
+    const final = base + Math.PI*2*k;
+    const start = rot, dist = final - start, dur = 5500 + rnd()*1500, t0 = performance.now();
+    let lastIdx = idxAt(rot);
+    unlockAudio();
+    (function frame(now){
+      const t = Math.min(1,(now - t0)/dur);
+      const e = 1 - Math.pow(1 - t, 4);
+      rot = start + dist*e; draw();
+      const idx = idxAt(rot);
+      if (idx !== lastIdx){ tick(); lastIdx = idx; }
+      if (t < 1) requestAnimationFrame(frame); else finish(idxAt(rot));
+    })(t0);
+  }
+
+  function finish(idx){
+    spinning = false; $('spin').disabled = false; $('hub').textContent = '🏆';
+    $('winner').textContent = names[idx];
+    $('overlay').classList.add('show');
+    startFx(); fanfare();
+  }
+
+  function closeOverlay(){ $('overlay').classList.remove('show'); stopFx(); $('hub').textContent = '🎡'; }
+
+  /* ---------- sound (WebAudio, no files) ---------- */
+  let ac;
+  function unlockAudio(){ try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if (ac.state==='suspended') ac.resume(); }catch(e){} }
+  function beep(freq, t, dur, vol, type){
+    if (muted || !ac) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'square'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur);
+  }
+  function tick(){ if (ac) beep(900, ac.currentTime, 0.04, 0.06); }
+  function fanfare(){
+    if (!ac) return;
+    const t = ac.currentTime, notes = [523, 659, 784, 1047, 784, 1047, 1319];
+    notes.forEach((f,i) => beep(f, t + i*0.12, 0.35, 0.12, 'triangle'));
+  }
+  $('mute').textContent = muted ? '🔇' : '🔊';
+  $('mute').onclick = () => { muted = !muted; localStorage.setItem('dani-wheel-mute', muted?'1':'0'); $('mute').textContent = muted ? '🔇' : '🔊'; };
+
+  /* ---------- confetti + fireworks ---------- */
+  const fx = $('fx'), fc = fx.getContext('2d');
+  let parts = [], rockets = [], fxOn = false, fxStart = 0, lastRocket = 0, lastConfetti = 0, raf;
+  function sizeFx(){ fx.width = innerWidth; fx.height = innerHeight; }
+  addEventListener('resize', sizeFx);
+  const rr = Math.random;
+
+  function confetti(n){
+    for (let i=0;i<n;i++) parts.push({ type:'c', x: rr()*fx.width, y: -20 - rr()*fx.height*0.25,
+      vx:(rr()-.5)*3, vy: 2.5 + rr()*3.5, w: 7 + rr()*9, h: 5 + rr()*6, rot: rr()*6.28, vr:(rr()-.5)*.35,
+      color: COLORS[Math.floor(rr()*COLORS.length)], sway: rr()*6.28 });
+  }
+  function rocket(){
+    rockets.push({ x: fx.width*(0.12 + 0.76*rr()), y: fx.height + 10, vx:(rr()-.5)*2.5, vy: -(11 + rr()*5),
+      color: COLORS[Math.floor(rr()*COLORS.length)] });
+  }
+  function explode(r){
+    const cnt = 70 + Math.floor(rr()*40);
+    for (let i=0;i<cnt;i++){ const a = rr()*6.28, sp = 2 + rr()*6;
+      parts.push({ type:'s', x:r.x, y:r.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:1, decay: 0.01 + rr()*0.012,
+        color: rr() < .3 ? '#ffffff' : r.color, size: 2 + rr()*2 });
+    }
+  }
+  function startFx(){ sizeFx(); parts = []; rockets = []; fxOn = true; fxStart = performance.now(); lastRocket = 0; lastConfetti = 0; confetti(260); cancelAnimationFrame(raf); loop(fxStart); }
+  function stopFx(){ fxOn = false; cancelAnimationFrame(raf); fc.clearRect(0,0,fx.width,fx.height); }
+
+  function loop(now){
+    if (!fxOn) return;
+    const el = now - fxStart;
+    if (el < 14000 && now - lastRocket > 550){ rocket(); if (rr() < .4) rocket(); lastRocket = now; }
+    if (el < 5000 && now - lastConfetti > 400){ confetti(40); lastConfetti = now; }
+
+    fc.clearRect(0,0,fx.width,fx.height);
+    fc.globalCompositeOperation = 'lighter';
+    for (let i = rockets.length-1; i>=0; i--){
+      const r = rockets[i]; r.x += r.vx; r.y += r.vy; r.vy += 0.16;
+      fc.fillStyle = r.color; fc.beginPath(); fc.arc(r.x, r.y, 3, 0, 6.28); fc.fill();
+      fc.strokeStyle = r.color; fc.globalAlpha = .5; fc.lineWidth = 2; fc.beginPath(); fc.moveTo(r.x, r.y); fc.lineTo(r.x - r.vx*4, r.y - r.vy*4); fc.stroke(); fc.globalAlpha = 1;
+      if (r.vy >= -1.5){ explode(r); rockets.splice(i,1); }
+    }
+    for (let i = parts.length-1; i>=0; i--){
+      const p = parts[i];
+      if (p.type === 's'){
+        p.vx *= 0.975; p.vy = p.vy*0.975 + 0.09; p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+        if (p.life <= 0){ parts.splice(i,1); continue; }
+        fc.globalAlpha = Math.max(0,p.life); fc.fillStyle = p.color;
+        fc.beginPath(); fc.arc(p.x, p.y, p.size*p.life + .5, 0, 6.28); fc.fill();
+      } else {
+        fc.globalCompositeOperation = 'source-over'; fc.globalAlpha = 1;
+        p.sway += 0.06; p.x += p.vx + Math.sin(p.sway)*1.2; p.y += p.vy; p.rot += p.vr;
+        if (p.y > fx.height + 30){ parts.splice(i,1); continue; }
+        fc.save(); fc.translate(p.x,p.y); fc.rotate(p.rot); fc.fillStyle = p.color;
+        fc.fillRect(-p.w/2, -p.h/2, p.w, p.h * Math.abs(Math.cos(p.sway))); fc.restore();
+        fc.globalCompositeOperation = 'lighter';
+      }
+    }
+    fc.globalAlpha = 1; fc.globalCompositeOperation = 'source-over';
+    if (el > 14000 && !parts.length && !rockets.length){ fxOn = false; return; }
+    raf = requestAnimationFrame(loop);
+  }
+
+  /* ---------- names list ---------- */
+  function renderList(){
+    const ul = $('list'); ul.innerHTML = '';
+    names.forEach((nm,i) => {
+      const li = document.createElement('li'); li.style.background = color(i);
+      const s = document.createElement('span'); s.textContent = nm;
+      const x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.title = 'הסרה';
+      x.onclick = () => { if (spinning) return; names.splice(i,1); commit(); };
+      li.append(s, x); ul.appendChild(li);
+    });
+    $('count').textContent = names.length;
+    $('empty').hidden = names.length > 0;
+  }
+  function commit(){ save(); renderList(); draw(); }
+
+  $('addForm').onsubmit = e => {
+    e.preventDefault();
+    const raw = $('nameInput').value;
+    const added = raw.split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
+    if (!added.length) return;
+    names.push(...added); $('nameInput').value = ''; commit();
+  };
+  $('shuffle').onclick = () => { if (spinning) return; for (let i = names.length-1; i>0; i--){ const j = Math.floor(rnd()*(i+1)); [names[i],names[j]] = [names[j],names[i]]; } commit(); };
+  $('clear').onclick = () => { if (spinning) return; if (names.length && confirm('למחוק את כל השמות?')){ names = []; commit(); } };
+  $('reset').onclick = () => { if (spinning) return; names = [...DEFAULT]; commit(); };
+
+  /* ---------- tabs & buttons ---------- */
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + b.dataset.tab));
+    if (b.dataset.tab === 'names') $('nameInput').focus();
+  });
+  $('spin').onclick = spin;
+  $('again').onclick = () => { closeOverlay(); setTimeout(spin, 150); };
+  $('close').onclick = closeOverlay;
+  $('overlay').onclick = e => { if (e.target === $('overlay')) closeOverlay(); };
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('overlay').classList.contains('show')) closeOverlay();
+    else if (e.key === ' ' && document.activeElement.tagName !== 'INPUT' && !$('overlay').classList.contains('show')){ e.preventDefault(); spin(); }
+  });
+
+  renderList(); draw();
+  document.fonts && document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>
